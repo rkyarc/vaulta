@@ -27,3 +27,15 @@ export const transactions = pgTable("transactions", {
     categoryId: integer("category_id").references(() => categories.id).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// 4. Table Budgets
+export const budgets = pgTable("budgets", {
+    id: serial("id").primaryKey(),
+    amount: integer("amount").notNull(),
+    periodStart: timestamp("period_start").notNull(),
+    periodEnd: timestamp("period_end").notNull(),
+    // Foreign Key relasi ke tabel users dengan menggunakan references
+    userId: integer("user_id").references(() => users.id).notNull(),
+    categoryId: integer("category_id").references(() => categories.id).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+})
