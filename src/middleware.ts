@@ -3,7 +3,7 @@ import { withAuth } from "next-auth/middleware";
 // Middleware ini akan otomatis mengecek token JWT (sesi login)
 export default withAuth({
   pages: {
-    signIn: "/api/auth/signin", // Arahkan ke sini jika belum login
+    signIn: "/login", // Arahkan ke sini jika belum login
   },
 });
 
