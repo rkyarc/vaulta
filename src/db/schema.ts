@@ -4,7 +4,8 @@ import { pgTable, serial, varchar, integer, timestamp } from "drizzle-orm/pg-cor
 export const users = pgTable("users", {
     id: serial("id").primaryKey(),
     name: varchar("name", { length: 255 }).notNull(),
-    email: varchar("email", { length: 255}).notNull().unique(),
+    email: varchar("email", { length: 255 }).notNull().unique(),
+    password: varchar("password", { length: 255 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
