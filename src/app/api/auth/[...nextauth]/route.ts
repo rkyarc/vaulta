@@ -1,11 +1,11 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs"; // Tambahkan import bcrypt
 import { db } from "../../../../db/index";
 import { users } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = ({
   providers: [
     CredentialsProvider({
       name: "Akun Vaulta",
@@ -47,10 +47,26 @@ const handler = NextAuth({
   session: {
     strategy: "jwt",
   },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).id = token.id;
+      }
+      return session;
+    }
+  },
   pages: {
     signIn: "/login",
   },
   secret: process.env.AUTH_SECRET,
 });
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
