@@ -3,17 +3,22 @@ import bcrypt from "bcryptjs";
 import { db } from "../../../../db/index";
 import { users } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
+import { registerSchema } from "@/lib/validations/auth";
 
 export async function POST(request: Request) {
   try {
     // 1. Tangkap data yang dikirim oleh pengguna
     const body = await request.json();
-    const { name, email, password } = body;
+
+    const validationResult = registerSchema.safeParse(body);
 
     // 2. Validasi dasar: Pastikan semua kolom diisi
-    if (!name || !email || !password) {
-      return NextResponse.json({ message: "Nama, email, dan password wajib diisi!" }, { status: 400 });
+    if (!validationResult.success) {
+      const errorMessage = validationResult.error.issues[0].message;
+      return NextResponse.json({ message: errorMessage }, { status: 400 });
     }
+
+    const { name, email, password } = validationResult.data;
 
     // 3. Cek apakah email sudah pernah terdaftar di database
     const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
