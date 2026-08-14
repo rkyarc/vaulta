@@ -11,7 +11,7 @@ export const registerSchema = z.object({
     .email({ message: "Format email tidak valid." }),
   password: z
     .string()
-    .min(6, { message: "Password minimal harus 6 karakter." }),
+    .min(8, { message: "Password minimal harus 8 karakter." }),
 });
 
 // 2. Aturan validasi untuk Form Masuk (Login)

@@ -94,7 +94,7 @@ export default function RegisterPage() {
                 type="password"
                 required
                 className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Minimal 6 karakter"
+                placeholder="Minimal 8 karakter"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
