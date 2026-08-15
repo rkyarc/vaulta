@@ -5,6 +5,7 @@ import { db } from "@/db/index";
 import { categories } from "@/db/schema";
 import { createCategorySchema } from "@/lib/validations/category";
 import { successResponse, errorResponse, zodErrorResponse } from "@/lib/api-response";
+import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
@@ -42,5 +43,28 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error saat membuat kategori:", error);
     return errorResponse("Terjadi kesalahan pada server saat membuat kategori", 500);
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    // 1. Cek sesi login (seperti biasa)
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return errorResponse("Kamu belum login / tidak memiliki akses", 401);
+    }
+
+    // 2. Ambil data dari database HANYA yang milik user ini
+    const userCategories = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.userId, parseInt((session.user as any).id))); 
+
+    // 3. Kembalikan datanya!
+    return successResponse(userCategories, "Berhasil mengambil data kategori", 200);
+
+  } catch (error) {
+    console.error("Error saat mengambil kategori:", error);
+    return errorResponse("Terjadi kesalahan pada server saat mengambil kategori", 500);
   }
 }
