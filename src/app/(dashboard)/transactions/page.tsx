@@ -1,6 +1,56 @@
 import { Plus } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { db } from "@/db/index";
+import { transactions, categories } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
-export default function TransactionsPage() {
+export default async function TransactionsPage() {
+  // 1. Ambil data sesi user yang sedang login
+  const session = await getServerSession(authOptions);
+  const userId = parseInt((session?.user as any)?.id || "0");
+
+  // 2. Tarik data dari database tanpa kolom type dulu
+  const rawTransactions = await db
+    .select({
+      id: transactions.id,
+      amount: transactions.amount,
+      description: transactions.description,
+      date: transactions.date,
+      categoryName: categories.name,
+    })
+    .from(transactions)
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(eq(transactions.userId, userId))
+    .orderBy(desc(transactions.date));
+
+  // 3. Tambahkan logika penentuan tipe berdasarkan nilai amount
+  const userTransactions = rawTransactions.map((trx) => ({
+    ...trx,
+    type: trx.amount >= 0 ? 'INCOME' : 'EXPENSE'
+  }));
+
+  // Fungsi bantuan untuk memformat tanggal ke gaya Indonesia
+  const formatDate = (date: string | Date | null) => {
+    if (!date) return "-";
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(date));
+  };
+
+  // Fungsi bantuan untuk memformat angka menjadi Rupiah
+  const formatRupiah = (amount: number | string | null) => {
+    if (!amount) return "Rp 0";
+    const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(numAmount);
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       
@@ -29,38 +79,38 @@ export default function TransactionsPage() {
             </tr>
           </thead>
           <tbody className="text-sm divide-y divide-gray-100">
-            {/* 
-              Ini adalah data statis sementara (Dummy). 
-              Nanti kita akan menggantinya dengan data asli dari database. 
-            */}
-            <tr className="hover:bg-gray-50 transition-colors">
-              <td className="p-4 text-gray-600">15 Agu 2026</td>
-              <td className="p-4 font-medium text-gray-800">Beli Nasi Goreng Spesial</td>
-              <td className="p-4">
-                <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-semibold">
-                  Makanan
-                </span>
-              </td>
-              <td className="p-4 text-right font-bold text-red-600">- Rp 250.000</td>
-              <td className="p-4 text-center">
-                <button className="text-blue-500 hover:text-blue-700 mr-4 font-medium">Edit</button>
-                <button className="text-red-500 hover:text-red-700 font-medium">Hapus</button>
-              </td>
-            </tr>
-            <tr className="hover:bg-gray-50 transition-colors">
-              <td className="p-4 text-gray-600">14 Agu 2026</td>
-              <td className="p-4 font-medium text-gray-800">Gaji Bulanan</td>
-              <td className="p-4">
-                <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">
-                  Gaji
-                </span>
-              </td>
-              <td className="p-4 text-right font-bold text-green-600">+ Rp 5.000.000</td>
-              <td className="p-4 text-center">
-                <button className="text-blue-500 hover:text-blue-700 mr-4 font-medium">Edit</button>
-                <button className="text-red-500 hover:text-red-700 font-medium">Hapus</button>
-              </td>
-            </tr>
+            {userTransactions.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-gray-500">
+                  Belum ada transaksi yang dicatat. Mulai catat transaksi pertamamu!
+                </td>
+              </tr>
+            ) : (
+              userTransactions.map((trx) => (
+                <tr key={trx.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="p-4 text-gray-600">{formatDate(trx.date)}</td>
+                  <td className="p-4 font-medium text-gray-800">{trx.description}</td>
+                  <td className="p-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      trx.type === 'INCOME' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-orange-100 text-orange-700'
+                    }`}>
+                      {trx.categoryName || "Tanpa Kategori"}
+                    </span>
+                  </td>
+                  <td className={`p-4 text-right font-bold ${
+                    trx.type === 'INCOME' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {trx.type === 'INCOME' ? '+' : ''} {formatRupiah(trx.amount)}
+                  </td>
+                  <td className="p-4 text-center">
+                    <button className="text-blue-500 hover:text-blue-700 mr-4 font-medium">Edit</button>
+                    <button className="text-red-500 hover:text-red-700 font-medium">Hapus</button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
