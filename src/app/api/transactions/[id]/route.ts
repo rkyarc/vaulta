@@ -96,3 +96,37 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return errorResponse("Terjadi kesalahan pada server saat mengubah transaksi", 500);
   }
 }
+
+export async function GET(request: Request,{ params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return errorResponse("Kamu belum login", 401);
+
+    // Sama seperti PATCH dan DELETE, kita harus 'await' params-nya
+    const resolvedParams = await params;
+    const transactionId = parseInt(resolvedParams.id);
+    const userId = parseInt((session.user as any).id);
+
+    // Cari transaksi spesifik tersebut di database
+    const transactionDetail = await db.select()
+      .from(transactions)
+      .where(
+        and(
+          eq(transactions.id, transactionId),
+          eq(transactions.userId, userId) // Kunci Keamanan!
+        )
+      );
+
+    // Jika array kosong (data tidak ada atau beda user)
+    if (transactionDetail.length === 0) {
+      return errorResponse("Transaksi tidak ditemukan atau bukan milikmu", 404);
+    }
+
+    // Kembalikan data pada indeks ke-0 (karena db.select mengembalikan bentuk array)
+    return successResponse(transactionDetail[0], "Berhasil mengambil detail transaksi", 200);
+
+  } catch (error) {
+    console.error("Error saat mengambil detail transaksi:", error);
+    return errorResponse("Terjadi kesalahan pada server", 500);
+  }
+}
