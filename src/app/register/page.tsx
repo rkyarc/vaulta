@@ -12,111 +12,120 @@ export default function RegisterPage() {
     password: "",
   });
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault(); // Mencegah halaman reload saat tombol ditekan
     setError("");
+    setIsLoading(true);
 
     try {
-      // Mengirim data ke API endpoint yang kita buat sebelumnya
+      // Menembak API Backend yang sudah kita buat sebelumnya
       const res = await fetch("/api/auth/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await res.json();
 
-      if (res.ok) {
-        // Jika sukses, arahkan pengguna ke halaman login
-        router.push("/api/auth/signin");
-      } else {
-        // Jika gagal (misal email sudah ada), tampilkan pesan error dari API
-        setError(data.message || "Terjadi kesalahan saat mendaftar.");
+      if (!res.ok) {
+        throw new Error(data.message || "Terjadi kesalahan saat mendaftar");
       }
-    } catch (err) {
-      setError("Gagal terhubung ke server.");
+
+      // Jika sukses, arahkan ke halaman login
+      alert("Registrasi berhasil! Silakan login.");
+      router.push("/login");
+    } catch (err: any) {
+      setError(err.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-4">
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-slate-900 p-8 shadow-xl border border-slate-800">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-white">Daftar Vaulta</h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Buat akun untuk mulai mencatat keuanganmu
-          </p>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Daftar Akun Vaulta</h1>
+        
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          {/* Menampilkan pesan error jika ada */}
-          {error && (
-            <div className="rounded-md bg-red-500/10 p-4 border border-red-500/50 text-sm text-red-400 text-center">
-              {error}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+              Nama Lengkap
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-black"
+              placeholder="Masukkan nama"
+              required
+            />
+          </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300">Nama Lengkap</label>
-              <input
-                type="text"
-                required
-                className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Misal: John Doe"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-300">Email</label>
-              <input
-                type="email"
-                required
-                className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="nama@email.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-black"
+              placeholder="Masukkan email"
+              required
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300">Password</label>
-              <input
-                type="password"
-                required
-                className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Minimal 8 karakter"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
+          <div>
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 text-black"
+              placeholder="Minimal 6 karakter"
+              required
+              minLength={6}
+            />
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            disabled={isLoading}
+            className={`w-full text-white font-bold py-2 px-4 rounded focus:outline-none ${
+              isLoading ? "bg-blue-300 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+            }`}
           >
-            {loading ? "Memproses..." : "Daftar Sekarang"}
+            {isLoading ? "Memproses..." : "Daftar"}
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-400">
+        <p className="text-center mt-4 text-sm text-gray-600">
           Sudah punya akun?{" "}
-          <Link href="/api/auth/signin" className="text-blue-400 hover:text-blue-300 font-medium">
-            Masuk di sini
+          <Link href="/login" className="text-blue-500 hover:text-blue-700 font-semibold">
+            Login di sini
           </Link>
         </p>
       </div>
-    </main>
+    </div>
   );
 }
