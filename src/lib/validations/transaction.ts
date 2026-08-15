@@ -7,3 +7,5 @@ export const createTransactionSchema = z.object({
   description: z.string().min(1, { message: "Deskripsi wajib diisi." }),
   transactionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Format tanggal harus YYYY-MM-DD." }),
 });
+
+export const updateTransactionSchema = createTransactionSchema.partial();

@@ -4,7 +4,8 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { db } from "@/db/index";
 import { transactions } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { successResponse, errorResponse } from "@/lib/api-response";
+import { successResponse, errorResponse, zodErrorResponse } from "@/lib/api-response";
+import { updateTransactionSchema } from "@/lib/validations/transaction";
 
 // Perhatikan ada parameter tambahan { params } di sini
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -40,5 +41,58 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   } catch (error) {
     console.error("Error saat menghapus transaksi:", error);
     return errorResponse("Terjadi kesalahan pada server saat menghapus transaksi", 500);
+  }
+}
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return errorResponse("Kamu belum login", 401);
+
+    const resolvedParams = await params;
+    const transactionId = parseInt(resolvedParams.id);
+    const userId = parseInt((session.user as any).id);
+
+    const body = await request.json();
+    const validationResult = updateTransactionSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      return zodErrorResponse(validationResult.error);
+    }
+
+    const { categoryId, amount, description, transactionDate } = validationResult.data;
+
+    // Siapkan wadah untuk menampung data apa saja yang ingin diubah
+    const updateData: any = {};
+    if (categoryId !== undefined) updateData.categoryId = categoryId;
+    if (amount !== undefined) updateData.amount = amount;
+    if (description !== undefined) updateData.description = description;
+    if (transactionDate !== undefined) updateData.date = new Date(transactionDate);
+
+    // Jika wadah kosong (pengguna tidak mengirim perubahan apa-apa)
+    if (Object.keys(updateData).length === 0) {
+      return errorResponse("Tidak ada data yang diubah", 400);
+    }
+
+    // Eksekusi update ke database
+    const updatedTransaction = await db.update(transactions)
+      .set(updateData)
+      .where(
+        and(
+          eq(transactions.id, transactionId),
+          eq(transactions.userId, userId)
+        )
+      )
+      .returning();
+
+    if (updatedTransaction.length === 0) {
+      return errorResponse("Transaksi tidak ditemukan atau tidak memiliki akses", 404);
+    }
+
+    return successResponse(updatedTransaction[0], "Transaksi berhasil diperbarui", 200);
+
+  } catch (error) {
+    console.error("Error saat mengubah transaksi:", error);
+    return errorResponse("Terjadi kesalahan pada server saat mengubah transaksi", 500);
   }
 }
