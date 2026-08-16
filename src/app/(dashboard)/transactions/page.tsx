@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -60,10 +61,10 @@ export default async function TransactionsPage() {
           <h2 className="text-2xl font-bold text-gray-800">Riwayat Transaksi</h2>
           <p className="text-gray-500 text-sm mt-1">Kelola semua pemasukan dan pengeluaranmu di sini.</p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors">
+        <Link href="/transactions/create" className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors">
           <Plus size={18} />
           Catat Transaksi
-        </button>
+        </Link>
       </div>
 
       {/* --- Bagian Tabel Transaksi --- */}
