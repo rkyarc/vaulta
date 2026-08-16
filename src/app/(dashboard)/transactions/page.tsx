@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import TransactionDeleteButton from "@/components/TransactionDeleteButton";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { db } from "@/db/index";
@@ -107,7 +108,7 @@ export default async function TransactionsPage() {
                   </td>
                   <td className="p-4 text-center">
                     <button className="text-blue-500 hover:text-blue-700 mr-4 font-medium">Edit</button>
-                    <button className="text-red-500 hover:text-red-700 font-medium">Hapus</button>
+                    <TransactionDeleteButton id={trx.id} />
                   </td>
                 </tr>
               ))
