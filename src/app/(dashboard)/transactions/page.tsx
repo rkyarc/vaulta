@@ -107,7 +107,7 @@ export default async function TransactionsPage() {
                     {trx.type === 'INCOME' ? '+' : ''} {formatRupiah(trx.amount)}
                   </td>
                   <td className="p-4 text-center">
-                    <button className="text-blue-500 hover:text-blue-700 mr-4 font-medium">Edit</button>
+                    <Link href={`/transactions/${trx.id}/edit`} className="text-blue-500 hover:text-blue-700 mr-4 font-medium">Edit</Link>
                     <TransactionDeleteButton id={trx.id} />
                   </td>
                 </tr>
