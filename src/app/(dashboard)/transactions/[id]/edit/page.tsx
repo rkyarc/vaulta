@@ -43,7 +43,7 @@ export default function EditTransactionPage() {
         
         // 3. Isi formulir dengan data lama
         setFormData({
-          type: trx.amount >= 0 ? "INCOME" : "EXPENSE",
+          type: trx.type || "EXPENSE",
           amount: Math.abs(trx.amount).toString(), // Hilangkan tanda minus untuk ditampilkan di input
           categoryId: trx.categoryId.toString(),
           description: trx.description,
@@ -60,7 +60,11 @@ export default function EditTransactionPage() {
   }, [transactionId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (e.target.name === "type") {
+      setFormData({ ...formData, type: e.target.value, categoryId: ""});
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,9 +73,12 @@ export default function EditTransactionPage() {
     setError("");
 
     try {
+      const rawAmount = parseFloat(formData.amount);
+      const finalAmount = Math.abs(rawAmount);
+
       const payload = {
         type: formData.type,
-        amount: parseFloat(formData.amount),
+        amount: finalAmount,
         categoryId: parseInt(formData.categoryId),
         description: formData.description,
         transactionDate: formData.transactionDate,
@@ -155,8 +162,12 @@ export default function EditTransactionPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
               <select name="categoryId" value={formData.categoryId} onChange={handleChange} required className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white">
                 <option value="" disabled>Pilih Kategori...</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                
+                {/* FILTER: Hanya tampilkan kategori yang tipenya sama dengan yang dipilih di atas */}
+                {categories
+                  .filter((cat) => cat.type === formData.type)
+                  .map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
             </div>

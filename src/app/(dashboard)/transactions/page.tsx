@@ -20,6 +20,7 @@ export default async function TransactionsPage() {
       description: transactions.description,
       date: transactions.date,
       categoryName: categories.name,
+      categoryType: categories.type,
     })
     .from(transactions)
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
@@ -29,7 +30,7 @@ export default async function TransactionsPage() {
   // 3. Tambahkan logika penentuan tipe berdasarkan nilai amount
   const userTransactions = rawTransactions.map((trx) => ({
     ...trx,
-    type: trx.amount >= 0 ? 'INCOME' : 'EXPENSE'
+    type: trx.categoryType || 'EXPENSE'
   }));
 
   // Fungsi bantuan untuk memformat tanggal ke gaya Indonesia
