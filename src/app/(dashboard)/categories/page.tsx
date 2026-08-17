@@ -5,6 +5,7 @@ import { db } from "@/db/index";
 import { categories } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import Link from "next/link";
+import CategoryDeleteButton from "@/components/CategoryDeleteButton";
 
 export default async function CategoriesPage() {
   // 1. Ambil sesi user
@@ -73,12 +74,10 @@ export default async function CategoriesPage() {
                     </span>
                   </td>
                   <td className="p-4 text-center">
-                    <button className="text-blue-500 hover:text-blue-700 mr-4 font-medium">
+                    <Link href={`/categories/${cat.id}/edit`} className="text-blue-500 hover:text-blue-700 mr-4 font-medium">
                       Edit
-                    </button>
-                    <button className="text-red-500 hover:text-red-700 font-medium">
-                      Hapus
-                    </button>
+                    </Link>
+                    <CategoryDeleteButton id={cat.id} />
                   </td>
                 </tr>
               ))
