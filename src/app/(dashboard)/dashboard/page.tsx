@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import MonthlyTrendChart from "@/components/MonthlyTrendChart";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState({
@@ -11,7 +12,6 @@ export default function DashboardPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Memanggil API Summary yang baru saja kita buat
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -29,7 +29,6 @@ export default function DashboardPage() {
     fetchSummary();
   }, []);
 
-  // Fungsi bantuan untuk format Rupiah
   const formatRupiah = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -48,16 +47,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header Dashboard */}
+      {/* 1. HEADER DASHBOARD */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800">Dashboard Keuangan</h2>
         <p className="text-gray-500 text-sm mt-1">Ringkasan kondisi arus kasmu saat ini.</p>
       </div>
 
-      {/* Grid Kartu Ringkasan */}
+      {/* 2. AREA KARTU RINGKASAN */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        {/* Kartu Saldo */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md">
           <div className="p-4 bg-blue-100 text-blue-600 rounded-xl">
             <Wallet size={28} />
@@ -70,7 +68,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Kartu Pemasukan */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md">
           <div className="p-4 bg-green-100 text-green-600 rounded-xl">
             <TrendingUp size={28} />
@@ -83,7 +80,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Kartu Pengeluaran */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md">
           <div className="p-4 bg-red-100 text-red-600 rounded-xl">
             <TrendingDown size={28} />
@@ -96,7 +92,24 @@ export default function DashboardPage() {
           </div>
         </div>
 
+      </div> 
+      {/* Akhir dari Area Kartu Ringkasan */}
+
+      {/* 3. AREA GRAFIK TREN BULANAN */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Grafik Utama memakan 2 kolom */}
+        <div className="lg:col-span-2">
+          <MonthlyTrendChart />
+        </div>
+
+        {/* Kotak kosong untuk Pie Chart selanjutnya */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-center">
+          <p className="text-gray-400 text-sm">Grafik Kategori (Segera Hadir)</p>
+        </div>
+        
       </div>
+      
     </div>
   );
 }
