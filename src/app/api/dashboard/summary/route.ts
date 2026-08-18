@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { db } from "@/db/index";
 import { transactions, categories } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm"; 
 
 export async function GET(request: Request) {
   try {
@@ -14,7 +14,34 @@ export async function GET(request: Request) {
     }
     const userId = parseInt((session.user as any).id);
 
-    // 2. Tarik semua transaksi milik user beserta tipe kategorinya (JOIN)
+    const { searchParams } = new URL(request.url);
+    const month = searchParams.get("month");
+    const year = searchParams.get("year");
+
+    // Siapkan array kondisi, bawaannya selalu mencari berdasarkan userId
+    const conditions = [eq(transactions.userId, userId)];
+
+    if (month && year) {
+      const yearNum = parseInt(year);
+      const monthNum = parseInt(month);
+      
+      const paddedMonth = month.padStart(2, "0");
+      const lastDay = new Date(yearNum, monthNum, 0).getDate(); 
+      
+      const startDateStr = `${year}-${paddedMonth}-01`;
+      
+      // Ubah ke objek Date agar TypeScript dan Drizzle bahagia
+      const startDate = new Date(startDateStr);
+      const endDate = new Date(`${year}-${paddedMonth}-${lastDay}T23:59:59.999Z`);
+
+      conditions.push(
+        gte(transactions.date, startDate),
+        lte(transactions.date, endDate)
+      );
+    }
+    // -------------------------------------------------------------
+
+    // 2. Tarik semua transaksi dengan kondisi dinamis (JOIN)
     const allTransactions = await db
       .select({
         amount: transactions.amount,
@@ -22,7 +49,7 @@ export async function GET(request: Request) {
       })
       .from(transactions)
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
-      .where(eq(transactions.userId, userId));
+      .where(and(...conditions)); // <-- Menggunakan and() untuk menggabungkan kondisi
 
     // 3. Mesin Penghitung
     let totalIncome = 0;
