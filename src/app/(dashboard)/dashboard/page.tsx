@@ -1,12 +1,102 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
+
 export default function DashboardPage() {
+  const [summary, setSummary] = useState({
+    totalIncome: 0,
+    totalExpense: 0,
+    balance: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Memanggil API Summary yang baru saja kita buat
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const res = await fetch("/api/dashboard/summary");
+        const json = await res.json();
+        if (json.success) {
+          setSummary(json.data);
+        }
+      } catch (error) {
+        console.error("Gagal menarik data summary", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSummary();
+  }, []);
+
+  // Fungsi bantuan untuk format Rupiah
+  const formatRupiah = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <p className="text-gray-500 font-medium">Menghitung data keuangan...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-10 text-center border border-gray-100">
-      <h2 className="text-3xl font-bold text-gray-800 mb-4">
-        Area Analytics & Dashboard
-      </h2>
-      <p className="text-gray-500 max-w-2xl mx-auto leading-relaxed">
-        Di sinilah kita akan meletakkan grafik Pie Chart (Kategori Pengeluaran) dan grafik tren bulanan nanti. Untuk saat ini, mari fokus membangun fitur pencatatan transaksinya terlebih dahulu di menu sebelah kiri.
-      </p>
+    <div className="space-y-8">
+      {/* Header Dashboard */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-800">Dashboard Keuangan</h2>
+        <p className="text-gray-500 text-sm mt-1">Ringkasan kondisi arus kasmu saat ini.</p>
+      </div>
+
+      {/* Grid Kartu Ringkasan */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Kartu Saldo */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md">
+          <div className="p-4 bg-blue-100 text-blue-600 rounded-xl">
+            <Wallet size={28} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500 mb-1">Total Saldo</p>
+            <h3 className={`text-2xl font-bold ${summary.balance >= 0 ? 'text-gray-800' : 'text-red-600'}`}>
+              {formatRupiah(summary.balance)}
+            </h3>
+          </div>
+        </div>
+
+        {/* Kartu Pemasukan */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md">
+          <div className="p-4 bg-green-100 text-green-600 rounded-xl">
+            <TrendingUp size={28} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500 mb-1">Pemasukan</p>
+            <h3 className="text-2xl font-bold text-green-600">
+              {formatRupiah(summary.totalIncome)}
+            </h3>
+          </div>
+        </div>
+
+        {/* Kartu Pengeluaran */}
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-5 transition-all hover:shadow-md">
+          <div className="p-4 bg-red-100 text-red-600 rounded-xl">
+            <TrendingDown size={28} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500 mb-1">Pengeluaran</p>
+            <h3 className="text-2xl font-bold text-red-600">
+              {formatRupiah(summary.totalExpense)}
+            </h3>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
