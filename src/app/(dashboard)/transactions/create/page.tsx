@@ -1,226 +1,178 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createTransactionSchema } from "@/lib/validations/transaction";
+import { z } from "zod";
+
+type TransactionFormValues = z.infer<typeof createTransactionSchema>;
 
 export default function CreateTransactionPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
+  const queryClient = useQueryClient();
 
-  // State untuk menyimpan isian formulir
-  const [formData, setFormData] = useState({
-    type: "EXPENSE",
-    amount: "",
-    categoryId: "",
-    description: "",
-    transactionDate: new Date().toISOString().split("T")[0], // Default hari ini
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<TransactionFormValues>({
+    resolver: zodResolver(createTransactionSchema),
+    defaultValues: {
+      type: "EXPENSE",
+      amount: 0,
+      description: "",
+      transactionDate: new Date().toISOString().split("T")[0], 
+    },
   });
 
-  // Mengambil daftar kategori dari API saat halaman dimuat
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch("/api/categories");
-        const json = await res.json();
-        if (json.success) {
-          setCategories(json.data);
-        }
-      } catch (err) {
-        console.error("Gagal mengambil kategori:", err);
-      }
-    };
-    fetchCategories();
-  }, []);
+  const selectedType = watch("type");
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await fetch("/api/categories");
+      const json = await res.json();
+      if (!json.success) throw new Error("Gagal mengambil kategori");
+      return json.data;
+    },
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    if (e.target.name === "type") {
-      setFormData({ ...formData, type: e.target.value, categoryId: "" });
-    } else {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const rawAmount = parseFloat(formData.amount);
-      const finalAmount = Math.abs(rawAmount);
-
-      const payload = {
-        type: formData.type,
-        amount: finalAmount,
-        categoryId: parseInt(formData.categoryId),
-        description: formData.description,
-        transactionDate: formData.transactionDate,
-      };
-
+  const mutation = useMutation({
+    mutationFn: async (payload: TransactionFormValues) => {
       const res = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(json.message || "Gagal menyimpan transaksi");
-      }
-
-      // Jika sukses, kembali ke halaman tabel
+      if (!res.ok) throw new Error(json.message || "Gagal menyimpan transaksi");
+      return json;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      
       router.push("/transactions");
-      router.refresh(); // Memaksa tabel memuat data terbaru
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+  const onSubmit = (data: TransactionFormValues) => {
+    data.amount = Math.abs(data.amount);
+    mutation.mutate(data);
   };
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header Formulir */}
       <div className="flex items-center gap-4 mb-6">
-        <Link
-          href="/transactions"
-          className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
-        >
+        <Link href="/transactions" className="p-2 bg-white rounded-full border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors">
           <ArrowLeft size={20} />
         </Link>
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            Catat Transaksi Baru
-          </h2>
-          <p className="text-gray-500 text-sm">
-            Masukkan detail pemasukan atau pengeluaranmu.
-          </p>
+          <h2 className="text-2xl font-bold text-gray-800">Catat Transaksi Baru</h2>
+          <p className="text-gray-500 text-sm">Masukkan detail pemasukan atau pengeluaranmu.</p>
         </div>
       </div>
 
-      {/* Kotak Formulir */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        {error && (
+        
+        {/* Menampilkan pesan Error dari API / Server jika ada */}
+        {mutation.isError && (
           <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-sm border border-red-100">
-            {error}
+            {mutation.error.message}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Tipe Transaksi */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Tipe Transaksi
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Tipe Transaksi</label>
             <div className="flex gap-4">
               <label className="flex-1 cursor-pointer">
-                <input
-                  type="radio"
-                  name="type"
-                  value="EXPENSE"
-                  checked={formData.type === "EXPENSE"}
-                  onChange={handleChange}
-                  className="peer sr-only"
-                />
+                <input type="radio" value="EXPENSE" {...register("type")} className="peer sr-only" />
                 <div className="text-center p-3 rounded-xl border border-gray-200 peer-checked:bg-red-50 peer-checked:border-red-500 peer-checked:text-red-700 font-medium transition-all">
                   Pengeluaran
                 </div>
               </label>
               <label className="flex-1 cursor-pointer">
-                <input
-                  type="radio"
-                  name="type"
-                  value="INCOME"
-                  checked={formData.type === "INCOME"}
-                  onChange={handleChange}
-                  className="peer sr-only"
-                />
+                <input type="radio" value="INCOME" {...register("type")} className="peer sr-only" />
                 <div className="text-center p-3 rounded-xl border border-gray-200 peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-700 font-medium transition-all">
                   Pemasukan
                 </div>
               </label>
             </div>
+            {/* Tampilkan pesan error validasi Zod khusus kolom ini */}
+            {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type.message}</p>}
           </div>
 
-          {/* Nominal */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Nominal (Rp)
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Nominal (Rp)</label>
+            {/* valueAsNumber PENTING karena HTML input secara default mengembalikan string, sedangkan Zod mengharapkan Number */}
             <input
               type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-              min="1"
               placeholder="Contoh: 50000"
+              {...register("amount", { valueAsNumber: true })}
               className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
+            {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount.message}</p>}
           </div>
 
-          {/* Kategori & Tanggal (Bersebelahan) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Kategori</label>
-              <select name="categoryId" value={formData.categoryId} onChange={handleChange} required className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white">
-                <option value="" disabled>Pilih Kategori...</option>
+              <select 
+                {...register("categoryId", { valueAsNumber: true })}
+                className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+                disabled={isLoadingCategories}
+              >
+                <option value={0} disabled>
+                  {isLoadingCategories ? "Memuat Kategori..." : "Pilih Kategori..."}
+                </option>
                 
-                {/* FILTER: Hanya tampilkan kategori yang tipenya sama dengan yang dipilih di atas */}
                 {categories
-                  .filter((cat) => cat.type === formData.type)
-                  .map((cat) => (
+                  .filter((cat: any) => cat.type === selectedType)
+                  .map((cat: any) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
+              {errors.categoryId && <p className="text-red-500 text-xs mt-1">{errors.categoryId.message}</p>}
             </div>
+            
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Tanggal
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Tanggal</label>
               <input
                 type="date"
-                name="transactionDate"
-                value={formData.transactionDate}
-                onChange={handleChange}
-                required
+                {...register("transactionDate")}
                 className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               />
+              {errors.transactionDate && <p className="text-red-500 text-xs mt-1">{errors.transactionDate.message}</p>}
             </div>
           </div>
 
-          {/* Deskripsi */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Deskripsi Singkat
-            </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Deskripsi Singkat</label>
             <input
               type="text"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
               placeholder="Contoh: Makan siang di kantin"
+              {...register("description")}
               className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
+            {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
           </div>
 
-          {/* Tombol Simpan */}
           <div className="pt-4">
             <button
               type="submit"
-              disabled={isLoading}
-              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold transition-all ${isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg"}`}
+              disabled={mutation.isPending}
+              className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white font-bold transition-all ${mutation.isPending ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg"}`}
             >
               <Save size={20} />
-              {isLoading ? "Menyimpan..." : "Simpan Transaksi"}
+              {mutation.isPending ? "Menyimpan..." : "Simpan Transaksi"}
             </button>
           </div>
+
         </form>
       </div>
     </div>
