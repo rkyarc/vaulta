@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { db } from "@/db/index";
 import { budgets, categories } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm"; 
 
 export async function GET(request: Request) {
   try {
@@ -42,11 +42,27 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { categoryId, amount } = body;
 
-    // Validasi input
     if (!categoryId || !amount) {
       return NextResponse.json(
         { success: false, message: "Kategori dan nominal anggaran wajib diisi" },
         { status: 400 }
+      );
+    }
+
+    const existingBudget = await db
+      .select()
+      .from(budgets)
+      .where(
+        and(
+          eq(budgets.userId, userId),
+          eq(budgets.categoryId, parseInt(categoryId))
+        )
+      );
+
+    if (existingBudget.length > 0) {
+      return NextResponse.json(
+        { success: false, message: "Anggaran untuk kategori ini sudah ada. Silakan hapus yang lama terlebih dahulu." },
+        { status: 400 } // Status 400 Bad Request
       );
     }
 

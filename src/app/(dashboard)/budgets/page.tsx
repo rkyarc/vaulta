@@ -13,20 +13,18 @@ export default function BudgetsPage() {
   const [categoryId, setCategoryId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Tarik data Anggaran dan Kategori saat halaman dimuat
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [budgetsRes, categoriesRes] = await Promise.all([
           fetch("/api/budgets"),
-          fetch("/api/categories") // Asumsi kamu sudah punya API kategori
+          fetch("/api/categories")
         ]);
         
         const budgetsJson = await budgetsRes.json();
         const categoriesJson = await categoriesRes.json();
 
         if (budgetsJson.success) setBudgets(budgetsJson.data);
-        // Filter hanya kategori PENGELUARAN (EXPENSE) karena kita hanya menganggarkan pengeluaran
         if (categoriesJson.success) {
           const expenseCategories = categoriesJson.data.filter((c: any) => c.type === 'EXPENSE');
           setCategories(expenseCategories);
@@ -62,7 +60,6 @@ export default function BudgetsPage() {
       
       const json = await res.json();
       if (json.success) {
-        // Refresh halaman agar data terbaru muncul
         window.location.reload();
       } else {
         alert("Gagal menyimpan anggaran: " + json.message);
@@ -71,6 +68,26 @@ export default function BudgetsPage() {
       alert("Terjadi kesalahan sistem.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (budgetId: number) => {
+    const confirmDelete = window.confirm("Apakah kamu yakin ingin menghapus anggaran ini?");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(`/api/budgets/${budgetId}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      
+      if (json.success) {
+        setBudgets(budgets.filter((b) => b.id !== budgetId));
+      } else {
+        alert("Gagal menghapus: " + json.message);
+      }
+    } catch (error) {
+      alert("Terjadi kesalahan sistem saat menghapus.");
     }
   };
 
@@ -91,7 +108,6 @@ export default function BudgetsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
-        {/* Kolom Kiri: Form Tambah Anggaran */}
         <div className="md:col-span-1">
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4">
             <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
@@ -133,7 +149,6 @@ export default function BudgetsPage() {
           </form>
         </div>
 
-        {/* Kolom Kanan: Daftar Anggaran Aktif */}
         <div className="md:col-span-2">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm min-h-[300px]">
             <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
@@ -152,8 +167,11 @@ export default function BudgetsPage() {
                       <p className="text-sm font-medium text-gray-500">{budget.categoryName}</p>
                       <p className="text-lg font-bold text-gray-800 mt-1">{formatRupiah(Number(budget.amount))}</p>
                     </div>
-                    {/* Tombol Hapus (Fungsionalitasnya bisa kita tambahkan nanti) */}
-                    <button className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    {/* Tombol hapus sekarang sudah dihubungkan ke fungsi handleDelete */}
+                    <button 
+                      onClick={() => handleDelete(budget.id)}
+                      className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
                       <Trash2 size={18} />
                     </button>
                   </div>
