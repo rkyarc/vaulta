@@ -5,6 +5,7 @@ import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import MonthlyTrendChart from "@/components/MonthlyTrendChart";
 import CategoriExpenseChart from "@/components/CategoryExpenseChart"
 import BudgetProgress from "@/components/BudgetProgress";
+import RecentTransactions from "@/components/RecentTransactions";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState({
@@ -113,8 +114,16 @@ export default function DashboardPage() {
       </div>
       
       {/* {4. AREA STATUS ANGGARAN} */}
-      <div className="mt-8">
-        <BudgetProgress />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        {/* Kolom Kiri: Budget Progress */}
+        <div>
+          <BudgetProgress />
+        </div>
+
+        {/* Kolom Kanan: Transaksi Terbaru */}
+        <div>
+          <RecentTransactions />
+        </div>
       </div>
 
     </div>
