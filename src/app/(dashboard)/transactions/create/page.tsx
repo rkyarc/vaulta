@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
@@ -19,6 +20,7 @@ export default function CreateTransactionPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<TransactionFormValues>({
     resolver: zodResolver(createTransactionSchema),
@@ -31,6 +33,10 @@ export default function CreateTransactionPage() {
   });
 
   const selectedType = watch("type");
+  useEffect(() => {
+    setValue("categoryId", 0);
+  }, [selectedType, setValue]);
+
   const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
