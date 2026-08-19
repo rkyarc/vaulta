@@ -50,11 +50,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Insert ke database
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
     const newBudget = await db.insert(budgets).values({
-      userId,
+      userId: userId,
       categoryId: parseInt(categoryId),
-      amount: amount.toString(), // Drizzle numeric butuh string untuk presisi
+      amount: amount.toString(), 
+      periodStart: firstDay,
+      periodEnd: lastDay
     } as any).returning();
 
     return NextResponse.json({ success: true, data: newBudget[0] }, { status: 201 });
