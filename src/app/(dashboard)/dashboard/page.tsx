@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import MonthlyTrendChart from "@/components/MonthlyTrendChart";
+import CategoriExpenseChart from "@/components/CategoryExpenseChart"
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState({
@@ -105,7 +106,7 @@ export default function DashboardPage() {
 
         {/* Kotak kosong untuk Pie Chart selanjutnya */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Grafik Kategori (Segera Hadir)</p>
+          <CategoriExpenseChart />
         </div>
         
       </div>
