@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Wallet, TrendingUp, TrendingDown } from "lucide-react";
 import MonthlyTrendChart from "@/components/MonthlyTrendChart";
 import CategoriExpenseChart from "@/components/CategoryExpenseChart"
+import BudgetProgress from "@/components/BudgetProgress";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState({
@@ -111,6 +112,11 @@ export default function DashboardPage() {
         
       </div>
       
+      {/* {4. AREA STATUS ANGGARAN} */}
+      <div className="mt-8">
+        <BudgetProgress />
+      </div>
+
     </div>
   );
 }
