@@ -34,7 +34,7 @@ export default function BudgetsPage() {
 
   // 3. Setup React Hook Form
   const form = useForm<BudgetFormValues>({
-    resolver: zodResolver(createBudgetSchema),
+    resolver: zodResolver(createBudgetSchema) as any,
     defaultValues: {
       categoryId: "",
       amount: 0,
@@ -115,17 +115,17 @@ export default function BudgetsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        
+
         {/* FORM KIRI */}
         <div className="md:col-span-1">
           <form onSubmit={form.handleSubmit(onSubmit)} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-4">
             <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-2">
-              <Plus size={18} className="text-blue-600"/> Buat Anggaran Baru
+              <Plus size={18} className="text-blue-600" /> Buat Anggaran Baru
             </h3>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Kategori Pengeluaran</label>
-              <select 
+              <select
                 {...form.register("categoryId")}
                 className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
@@ -141,8 +141,8 @@ export default function BudgetsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Batas Maksimal (Rp)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 {...form.register("amount")}
                 className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
@@ -154,8 +154,8 @@ export default function BudgetsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Mulai</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   {...form.register("periodStart")}
                   className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
@@ -165,8 +165,8 @@ export default function BudgetsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Selesai</label>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   {...form.register("periodEnd")}
                   className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
@@ -176,8 +176,8 @@ export default function BudgetsPage() {
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={mutation.isPending}
               className="mt-2 w-full bg-blue-600 text-white font-medium py-3 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-gray-400"
             >
@@ -190,7 +190,7 @@ export default function BudgetsPage() {
         <div className="md:col-span-2">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm min-h-[300px]">
             <h3 className="font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <Wallet size={18} className="text-blue-600"/> Anggaran Aktif Saat Ini
+              <Wallet size={18} className="text-blue-600" /> Anggaran Aktif Saat Ini
             </h3>
 
             {budgets.length === 0 ? (
@@ -213,7 +213,7 @@ export default function BudgetsPage() {
                             {formatRupiah(budget.spentAmount)} <span className="text-sm text-gray-400 font-normal">/ {formatRupiah(Number(budget.amount))}</span>
                           </p>
                         </div>
-                        <button 
+                        <button
                           onClick={() => handleDelete(budget.id)}
                           disabled={deleteMutation.isPending}
                           className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
@@ -224,10 +224,9 @@ export default function BudgetsPage() {
 
                       {/* Progress Bar Container */}
                       <div className="w-full bg-gray-100 rounded-full h-3 mb-2 overflow-hidden">
-                        <div 
-                          className={`h-3 rounded-full transition-all duration-500 ${
-                            isExceeded ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
-                          }`} 
+                        <div
+                          className={`h-3 rounded-full transition-all duration-500 ${isExceeded ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'
+                            }`}
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
@@ -237,11 +236,11 @@ export default function BudgetsPage() {
                         <span className="text-gray-500">
                           {new Date(budget.periodStart).toLocaleDateString('id-ID')} - {new Date(budget.periodEnd).toLocaleDateString('id-ID')}
                         </span>
-                        
+
                         {isExceeded ? (
-                          <span className="text-red-600 font-medium flex items-center gap-1"><AlertCircle size={12}/> Melebihi Batas!</span>
+                          <span className="text-red-600 font-medium flex items-center gap-1"><AlertCircle size={12} /> Melebihi Batas!</span>
                         ) : isWarning ? (
-                          <span className="text-amber-600 font-medium flex items-center gap-1"><AlertTriangle size={12}/> Hampir Habis!</span>
+                          <span className="text-amber-600 font-medium flex items-center gap-1"><AlertTriangle size={12} /> Hampir Habis!</span>
                         ) : (
                           <span className="text-emerald-600 font-medium">Aman terkendali</span>
                         )}
